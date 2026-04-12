@@ -11,8 +11,13 @@
 #     ├─ category_translation   (on product_category_name) → product_category_name_english
 #     └─ customers              (on customer_id)       → customer_state
 #
+# Row grain: one row = one order-item line (order_id + order_item_id).
+# A customer buying 2 units of the same product in one order produces two
+# rows with the same order_id + product_id but different order_item_id values.
+# order_item_id is retained in the output so the grain is always unique.
+#
 # Output schema:
-#   order_id, order_date, customer_id, product_id,
+#   order_id, order_item_id, order_date, customer_id, product_id,
 #   category, quantity, price, revenue, customer_state
 #
 # Public API:
@@ -47,8 +52,11 @@ CRITICAL_COLUMNS = [
 ]
 
 # Final column selection and order.
+# order_item_id is the tiebreaker that makes the grain unique when a customer
+# buys multiple units of the same product in a single order.
 OUTPUT_COLUMNS = [
     "order_id",
+    "order_item_id",
     "order_date",
     "customer_id",
     "product_id",
@@ -140,8 +148,18 @@ def build_fact_table(tables: dict[str, pd.DataFrame]) -> pd.DataFrame:
         logger.warning("  [parse dates] %s rows have unparseable timestamps.", f"{bad_dates:,}")
 
     # ── Step 5: Join products → get product_category_name ─────────────────────
+    # Deduplicate on product_id before merging to prevent fan-out.
+    # The products table may contain multiple rows per product_id (e.g. due to
+    # upstream data quality issues); keeping only the first occurrence ensures
+    # the merge stays many-to-one and never inflates the order_items grain.
+    products_raw = tables["products"][["product_id", "product_category_name"]]
+    products_deduped = products_raw.drop_duplicates(subset="product_id", keep="first")
+    logger.info(
+        "  [dedup products] %s → %s unique product_id rows",
+        f"{len(products_raw):,}", f"{len(products_deduped):,}",
+    )
     df = df.merge(
-        tables["products"][["product_id", "product_category_name"]],
+        products_deduped,
         on="product_id",
         how="left",
         validate="many_to_one",
@@ -196,6 +214,17 @@ def build_fact_table(tables: dict[str, pd.DataFrame]) -> pd.DataFrame:
 
     # ── Step 10: Select and order final columns ────────────────────────────────
     df = df[OUTPUT_COLUMNS].reset_index(drop=True)
+
+    # Sanity-check: every row must be uniquely identified by (order_id, order_item_id).
+    n_dups = df.duplicated(subset=["order_id", "order_item_id"]).sum()
+    if n_dups:
+        logger.warning(
+            "  [grain check] %s duplicate (order_id, order_item_id) pairs remain — "
+            "investigate upstream tables.",
+            f"{n_dups:,}",
+        )
+    else:
+        logger.info("  [grain check] ✓ grain (order_id, order_item_id) is fully unique.")
 
     logger.info(
         "Fact table ready — %s rows × %d cols.",
