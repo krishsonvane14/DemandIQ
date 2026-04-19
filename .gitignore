@@ -66,3 +66,7 @@ htmlcov/
 .idea/
 *.sublime-project
 *.sublime-workspace
+
+# -- forecast_preview.html
+
+forecast_preview.html
