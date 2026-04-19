@@ -277,19 +277,6 @@ def plot_forecast(
             "x": 0.03,
             "xanchor": "left",
         },
-        xaxis={
-            "title": "Date",
-            "showgrid": True,
-            "gridcolor": "rgba(255,255,255,0.06)",
-            "tickformat": "%b %Y",
-        },
-        yaxis={
-            "title": "Revenue (BRL)",
-            "showgrid": True,
-            "gridcolor": "rgba(255,255,255,0.06)",
-            "tickprefix": "R$ ",
-            "tickformat": ",.0f",
-        },
         legend={
             "orientation": "h",
             "yanchor": "bottom",
@@ -301,6 +288,19 @@ def plot_forecast(
         plot_bgcolor="rgba(0,0,0,0)",
         paper_bgcolor="rgba(0,0,0,0)",
         margin={"t": 60, "b": 40, "l": 60, "r": 20},
+    )
+    fig.update_xaxes(
+        title="Date",
+        showgrid=True,
+        gridcolor="rgba(255,255,255,0.06)",
+        tickformat="%b %Y",
+    )
+    fig.update_yaxes(
+        title="Revenue (BRL)",
+        showgrid=True,
+        gridcolor="rgba(255,255,255,0.06)",
+        tickprefix="R$ ",
+        tickformat=",.0f",
     )
 
     return fig
