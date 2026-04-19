@@ -155,8 +155,6 @@ The model returns:
 
 ## 📸 Screenshots
 
-> Add screenshots to `assets/` after running the app.
-
 ![KPI Dashboard](./assets/dashboard.png)
 ![Revenue Breakdown](./assets/revenue_breakdown.png)
 ![30-Day Forecast](./assets/forecast.png)
