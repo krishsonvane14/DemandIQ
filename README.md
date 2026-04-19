@@ -1,4 +1,4 @@
-# 📈 DemandIQ
+# DemandIQ
 
 **DemandIQ** is an end-to-end retail analytics dashboard that transforms raw e-commerce transaction data into actionable business intelligence. Built on the Olist Brazilian E-Commerce dataset, it computes key performance metrics, visualises revenue trends across categories, states, and time, forecasts the next 30 days of demand using Facebook Prophet, and surfaces natural-language business insights powered by Google's Gemini API. DemandIQ is designed for business analysts, data scientists, and decision-makers who need fast, reliable answers from their sales data — without writing a single line of SQL.
 
